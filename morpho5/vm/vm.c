@@ -1402,20 +1402,20 @@ callfunction: // Jump here if an instruction becomes a call
             if (MORPHO_ISARRAY(left)) {
                 unsigned int ndim = c-b+1;
                 unsigned int indx[ndim];
-				if (array_valuelisttoindices(ndim, &reg[b], indx)){
-					objectarrayerror err=array_getelement(MORPHO_GETARRAY(left), ndim, indx, &reg[b]);
-					if (err!=ARRAY_OK) ERROR( array_error(err) );
-				} else {
-					value newval = MORPHO_NIL;
-					objectarrayerror err = getslice(&left,&array_slicedim,&array_sliceconstructor,\
-													&array_slicecopy,ndim,&reg[b],&newval);
-					if (err!=ARRAY_OK) ERROR(array_error(err));
-					
-					if (!MORPHO_ISNIL(newval)) {
-						reg[b] = newval;
-						vm_bindobject(v, reg[b]);
-					} else  ERROR(VM_NONNUMINDX);
-				}
+        				if (array_valuelisttoindices(ndim, &reg[b], indx)){
+        					objectarrayerror err=array_getelement(MORPHO_GETARRAY(left), ndim, indx, &reg[b]);
+        					if (err!=ARRAY_OK) ERROR( array_error(err) );
+        				} else {
+        					value newval = MORPHO_NIL;
+        					objectarrayerror err = getslice(&left,&array_slicedim,&array_sliceconstructor,\
+        													&array_slicecopy,ndim,&reg[b],&newval);
+        					if (err!=ARRAY_OK) ERROR(array_error(err));
+
+        					if (!MORPHO_ISNIL(newval)) {
+        						reg[b] = newval;
+        						vm_bindobject(v, reg[b]);
+        					} else  ERROR(VM_NONNUMINDX);
+        				}
             } else {
                 if (!vm_invoke(v, left, indexselector, c-b+1, &reg[b], &reg[b])) {
                     ERROR(VM_NOTINDEXABLE);
@@ -1443,7 +1443,7 @@ callfunction: // Jump here if an instruction becomes a call
             }
 
             DISPATCH();
-        
+
         CASE_CODE(PUSHERR):
             b=DECODE_Bx(bc);
             if (!v->ehp) v->ehp=v->errorhandlers; else v->ehp++; // Add new error handler to the error stack
@@ -1457,7 +1457,7 @@ callfunction: // Jump here if an instruction becomes a call
             v->ehp--;         // Pull error handler off error stack
             if (v->ehp<v->errorhandlers) v->ehp=NULL; // If the stack is empty rest to NULL
             DISPATCH();
-        
+
         /*CASE_CODE(ARRAY):
             a=DECODE_A(bc); b=DECODE_B(bc); c=DECODE_C(bc);
             if (DECODE_ISBCONSTANT(bc)) {
@@ -1540,16 +1540,16 @@ callfunction: // Jump here if an instruction becomes a call
             #endif
             return true;
     }
-    
+
 vm_error:
     {
         objectstring erridstring=MORPHO_STATICSTRING(v->err.id);
         value errid = MORPHO_OBJECT(&erridstring);
-        
+
         /* Find the most recent callframe that requires us to return */
         callframe *retfp=NULL;
         for (retfp=v->fp; retfp>v->frame && !retfp->ret; retfp--);
-        
+
         /* Search down the error stack for an error handler that can handle the error  */
         for (errorhandler *eh=v->ehp; eh && eh>=v->errorhandlers; eh--) {
             /* Abort if we pass an intermediate frame that requires us to return */
@@ -1557,46 +1557,46 @@ vm_error:
                 v->ehp=eh; // Pop off all earlier error handlers
                 break;
             }
-            
+
             if (MORPHO_ISDICTIONARY(eh->dict)) {
                 value branchto = MORPHO_NIL;
                 objectdictionary *dict = MORPHO_GETDICTIONARY(eh->dict);
                 if (dictionary_get(&dict->dict, errid, &branchto)) {
                     error_clear(&v->err);
-                    
+
                     // Jump to the error handler
                     v->fp=eh->fp;
                     v->konst=v->fp->function->konst.data;
                     pc=v->instructions+MORPHO_GETINTEGERVALUE(branchto);
                     reg=v->stack.data+v->fp->roffset;
-                    
+
                     if (v->openupvalues) { /* Close any upvalues */
                         vm_closeupvalues(v, reg+v->fp->function->nregs);
                     }
-                    
+
                     v->ehp=eh-1; // Unwind the error handler stack
                     if (v->ehp<v->errorhandlers) v->ehp=NULL;
                     DISPATCH()
                 }
             }
         }
-        
+
         /* The error was not caught; unwind the stack to the point where we have to return  */
         if (!v->errfp) {
             v->errfp=v->fp; // Record frame pointer for stacktrace
             v->errfp->pc=pc;
         }
-        
+
         v->fp=retfp-1;
-        
+
     }
-    
+
 #undef INTERPRET_LOOP
 #undef CASE_CODE
 #undef DISPATCH
-    
+
     //v->fp->pc=pc;
-    
+
     return false;
 }
 
@@ -1726,7 +1726,7 @@ bool morpho_run(vm *v, program *p) {
     v->fp->function=p->global;
     v->fp->closure=NULL;
     v->fp->roffset=0;
-    
+
     /* Initialize global variables */
     int oldsize = v->globals.count;
     varray_valueresize(&v->globals, p->nglobals);
