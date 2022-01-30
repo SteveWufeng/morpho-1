@@ -14,6 +14,7 @@
 #include "object.h"
 #include "veneer.h"
 #include "builtin.h"
+#include "optimize.h"
 
 /** Base class for instances */
 static objectclass *baseclass;
@@ -3266,7 +3267,7 @@ static codeinfo compiler_import(compiler *c, syntaxtreenode *node, registerindx 
             compiler_init(src.data, c->out, &cc);
             cc.parent=c; /* Ensures global variables can be found */
         
-            morpho_compile(src.data, &cc, &c->err);
+            morpho_compile(src.data, &cc, false, &c->err);
             
             if (ERROR_SUCCEEDED(c->err)) {
                 compiler_stripend(c);
@@ -3348,10 +3349,11 @@ void compiler_clear(compiler *c) {
 /** Interface to the compiler
  * @param[in]  in    A string to compile
  * @param[in]  c     The compiler
+ * @param[in]  opt   Whether or not to invoke the optimizer
  * @param[out] err   Pointer to error block on failure
  * @returns    A bool indicating success or failure
  */
-bool morpho_compile(char *in, compiler *c, error *err) {
+bool morpho_compile(char *in, compiler *c, bool opt, error *err) {
     program *out = c->out;
     bool success = false;
     
@@ -3388,6 +3390,10 @@ bool morpho_compile(char *in, compiler *c, error *err) {
         }
     }
     
+    if (success && opt) {
+        optimize(c->out);
+    }
+    
     return success;
 }
 
@@ -3422,7 +3428,7 @@ void morpho_setbaseclass(value klss) {
     }
 }
 
-/** Initializes the error handling system */
+/** Initializes the compiler */
 void compile_initialize(void) {
     baseclass=NULL;
     
@@ -3495,8 +3501,11 @@ void compile_initialize(void) {
     morpho_defineerror(COMPILE_CNTOTSDLP, ERROR_COMPILE, COMPILE_CNTOTSDLP_MSG);
     morpho_defineerror(COMPILE_OPTPRMDFLT, ERROR_COMPILE, COMPILE_OPTPRMDFLT_MSG);
     morpho_defineerror(COMPILE_FORWARDREF, ERROR_COMPILE, COMPILE_FORWARDREF_MSG);
+    
+    optimize_initialize();
 }
 
 /** Finalizes the compiler */
 void compile_finalize(void) {
+    optimize_finalize();
 }

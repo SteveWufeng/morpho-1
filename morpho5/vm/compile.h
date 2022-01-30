@@ -127,7 +127,9 @@ typedef enum {
     REGISTER,
     CONSTANT,
     UPVALUE,
-    GLOBAL
+    GLOBAL,
+    VALUE,  // Used by the optimizer
+    NOTHING //
 } returntype;
 
 typedef struct {
