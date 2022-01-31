@@ -97,6 +97,12 @@ typedef unsigned int instruction;
 #define DECODE_F(x) ((bool) (x & (1<<17)))
 #define DECODE_G(x) ((bool) (x & (1<<16)))
 
+#define MASK_OP (0x3f << 26)
+#define MASK_A  (0xff << 18)
+#define MASK_Bc (0x1 << 17)
+#define MASK_B  (0xff << 9)
+#define MASK_Cc (0x1 << 8)
+#define MASK_C  (0xff)
 
 /* -----------------------------
  * Opcodes (built automatically)
